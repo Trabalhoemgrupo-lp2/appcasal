@@ -39,3 +39,5 @@
 - [x] Remover o domínio antigo hardcoded do fallback do Spotify e exigir APP_PUBLIC_ORIGIN em produção
 - [x] Preparar configuração Render Free para o servidor Express e documentar a suspensão por inatividade
 - [x] Validar build e pacote para hospedagem externa gratuita
+- [x] Adicionar `@supabase/supabase-js` e demais dependências runtime ausentes antes do deploy Render
+- [ ] Enviar a correção de dependências ao GitHub
