@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title">
+  <title id="title">Conversa a dois</title>
+  <rect width="1200" height="700" fill="#f8eee7"/>
+  <path d="M125 122h470a34 34 0 0 1 34 34v204a34 34 0 0 1-34 34H338l-103 83 22-83h-132a34 34 0 0 1-34-34V156a34 34 0 0 1 34-34z" fill="#fff" stroke="#573744" stroke-width="8"/>
+  <path d="M605 292h470a34 34 0 0 1 34 34v204a34 34 0 0 1-34 34H818l22 83-103-83H605a34 34 0 0 1-34-34V326a34 34 0 0 1 34-34z" fill="#c95767" stroke="#573744" stroke-width="8"/>
+  <circle cx="250" cy="255" r="18" fill="#c95767"/><circle cx="340" cy="255" r="18" fill="#c95767"/><circle cx="430" cy="255" r="18" fill="#c95767"/>
+  <path d="M704 420c74-76 199-4 199 74 0 76-100 127-100 127S703 570 703 494c0-78 125-150 199-74" fill="#fff1d7" opacity=".95"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title">
+  <title id="title">Duas pessoas caminhando juntas</title>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f5d9d0"/><stop offset="1" stop-color="#f8eee7"/></linearGradient>
+    <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#a66b76"/><stop offset="1" stop-color="#573744"/></linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#sky)"/>
+  <circle cx="930" cy="145" r="75" fill="#fff6df" opacity=".9"/>
+  <path d="M0 520c180-120 285-80 445 8 165 91 326 61 755-132v304H0z" fill="url(#ground)" opacity=".92"/>
+  <path d="M0 594c250-88 399-42 554 34 205 100 382 27 646-77v149H0z" fill="#3e2934" opacity=".72"/>
+  <path d="M470 523c64-26 153-26 220 0" fill="none" stroke="#f9dfd2" stroke-linecap="round" stroke-width="14" opacity=".8"/>
+  <circle cx="526" cy="348" r="35" fill="#573744"/><path d="M526 387v128M526 426l-59 70M526 426l65 66M526 515l-53 78M526 515l55 78" fill="none" stroke="#573744" stroke-linecap="round" stroke-width="18"/>
+  <circle cx="665" cy="330" r="34" fill="#c95767"/><path d="M665 368v130M665 410l-67 54M665 410l62 57M665 498l-52 82M665 498l59 82" fill="none" stroke="#c95767" stroke-linecap="round" stroke-width="18"/>
+  <path d="M74 113c92-45 184-48 276-9M93 170c77-35 156-36 235-10" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="10" opacity=".58"/>
+</svg>
