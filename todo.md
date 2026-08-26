@@ -43,3 +43,5 @@
 - [ ] Enviar a correção de dependências ao GitHub
 - [ ] Enviar `patches/wouter@3.7.1.patch` ao GitHub para corrigir o build Render
 - [ ] Reexecutar o deploy Render depois de enviar o patch e validar a URL pública
+- [ ] Garantir que `vite.config.ts` e arquivos de configuração essenciais estejam no GitHub
+- [ ] Reexecutar o deploy Render após corrigir os arquivos ausentes
