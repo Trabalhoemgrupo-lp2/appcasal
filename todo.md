@@ -47,7 +47,7 @@
 - [x] Reexecutar o deploy Render após corrigir os arquivos ausentes — deploy 5172004 disparado e falha confirmada antes da correção estrutural seguinte
 - [x] Salvar checkpoint pós-correção da configuração Vite inline
 - [x] Confirmar no Render o resultado do deploy do commit 9fc2783 — falha confirmada por import antigo no bundle
-- [ ] Confirmar no painel Render o resultado dos commits 19530b0/c614ebb — URL respondeu HTTP 200, mas o status final do deploy ainda não foi confirmado no painel
-- [ ] Reproduzir e corrigir o bloqueio que impede responder mensagens e salvar respostas/lugares
-- [ ] Adicionar testes para o fluxo corrigido de resposta e salvamento
-- [ ] Validar no build, no preview e na URL pública após a correção
+- [x] Confirmar no painel Render o resultado dos commits 19530b0/c614ebb — deploys detectados; URL pública HTTP 200 e bundle corrigido confirmados
+- [ ] Validar com sessão autenticada a correção do bloqueio de resposta e salvamento — handlers defensivos publicados; RLS externa ainda pode bloquear
+- [ ] Adicionar testes funcionais dos handlers de resposta e salvamento — teste atual cobre contratos no código-fonte
+- [x] Validar build, preview desktop/mobile e bundle público após a correção — HTTP 200 e marcador do handler de chat confirmados
