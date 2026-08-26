@@ -7291,9 +7291,15 @@ export default function Home() {
           })();
         }
       )
-      .subscribe();
+      .subscribe(status => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // O canal é apenas atualização ao vivo; uma falha nele não pode
+          // bloquear insert/update, que já atualizam o estado após sucesso.
+          console.warn(`[Realtime] canal indisponível: ${status}`);
+        }
+      });
     return () => {
-      client.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, [coupleId, hasDatabaseAccess, session]);
 
