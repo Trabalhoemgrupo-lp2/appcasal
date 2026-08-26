@@ -41,3 +41,5 @@
 - [x] Validar build e pacote para hospedagem externa gratuita
 - [x] Adicionar `@supabase/supabase-js` e demais dependências runtime ausentes antes do deploy Render
 - [ ] Enviar a correção de dependências ao GitHub
+- [ ] Enviar `patches/wouter@3.7.1.patch` ao GitHub para corrigir o build Render
+- [ ] Reexecutar o deploy Render depois de enviar o patch e validar a URL pública

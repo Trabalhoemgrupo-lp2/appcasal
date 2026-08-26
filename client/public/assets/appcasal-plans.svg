@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title">
+  <title id="title">Planos a dois</title>
+  <rect width="1200" height="700" fill="#573744"/>
+  <circle cx="930" cy="126" r="130" fill="#c95767" opacity=".65"/>
+  <path d="M0 560c194-110 338-117 510-20 208 118 383 75 690-62v222H0z" fill="#815163"/>
+  <path d="M230 470h350M230 520h220" stroke="#fff" stroke-linecap="round" stroke-width="18" opacity=".8"/>
+  <path d="M742 254l36 73 80 12-58 57 14 80-72-38-72 38 14-80-58-57 80-12z" fill="#fff1d7" opacity=".92"/>
+  <text x="600" y="150" text-anchor="middle" fill="#fff" font-family="Georgia,serif" font-size="44" font-weight="700">próximo capítulo</text>
+</svg>

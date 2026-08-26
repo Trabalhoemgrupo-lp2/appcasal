@@ -1,0 +1,33 @@
+{
+  "name": "appCasal — Caderno de Dois",
+  "short_name": "appCasal",
+  "description": "Um espaço privado para duas pessoas guardarem conversas, planos e memórias.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fcf7f3",
+  "theme_color": "#c95767",
+  "icons": [
+    {
+      "src": "/manus-storage/appcasal-logo_031a1201.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Momentos",
+      "short_name": "Momentos",
+      "description": "Abrir a galeria privada do casal.",
+      "url": "/?tab=momentos"
+    },
+    {
+      "name": "Tempo de vocês",
+      "short_name": "Contador",
+      "description": "Abrir a contagem do relacionamento.",
+      "url": "/?tab=contagem"
+    }
+  ]
+}

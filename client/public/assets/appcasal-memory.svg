@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title">
+  <title id="title">Memórias compartilhadas</title>
+  <rect width="1200" height="700" fill="#ead4c9"/>
+  <rect x="92" y="84" width="1016" height="532" rx="34" fill="#fffaf5" transform="rotate(-3 600 350)"/>
+  <path d="M140 184c205 35 312 22 462-34 157-59 287-57 454-3" fill="none" stroke="#c95767" stroke-linecap="round" stroke-width="14" opacity=".7"/>
+  <path d="M151 500c214-79 404-76 566 11 120 64 230 60 361-13" fill="none" stroke="#573744" stroke-linecap="round" stroke-width="20" opacity=".72"/>
+  <circle cx="382" cy="331" r="100" fill="#f4c9c1"/><circle cx="602" cy="292" r="104" fill="#e8b5ad"/><circle cx="824" cy="347" r="94" fill="#d9a0a0"/>
+  <path d="M439 319c35-50 109-19 109 33 0 50-59 84-59 84s-59-34-59-84c0-52 74-83 109-33" fill="#fff" opacity=".85"/>
+  <text x="600" y="564" text-anchor="middle" fill="#573744" font-family="Georgia,serif" font-size="42" font-weight="700">lugares que ficam</text>
+</svg>
