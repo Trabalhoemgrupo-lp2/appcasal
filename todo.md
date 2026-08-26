@@ -18,8 +18,8 @@
 - [x] Executar build de produção
 - [x] Validar TypeScript e testes
 - [x] Validar desktop e viewport móvel
-- [ ] Criar checkpoint final
-- [ ] Entregar URL estável e pendências obrigatórias do Supabase
+- [x] Criar checkpoint final
+- [ ] Entregar URL estável e pendências obrigatórias do Supabase — URL estável entregue; aplicar migrations/RLS/Realtime no Supabase externo
 
 ## Histórico
 
@@ -40,8 +40,11 @@
 - [x] Preparar configuração Render Free para o servidor Express e documentar a suspensão por inatividade
 - [x] Validar build e pacote para hospedagem externa gratuita
 - [x] Adicionar `@supabase/supabase-js` e demais dependências runtime ausentes antes do deploy Render
-- [ ] Enviar a correção de dependências ao GitHub
-- [ ] Enviar `patches/wouter@3.7.1.patch` ao GitHub para corrigir o build Render
-- [ ] Reexecutar o deploy Render depois de enviar o patch e validar a URL pública
-- [ ] Garantir que `vite.config.ts` e arquivos de configuração essenciais estejam no GitHub
-- [ ] Reexecutar o deploy Render após corrigir os arquivos ausentes
+- [x] Enviar a correção de dependências ao GitHub
+- [x] Enviar `patches/wouter@3.7.1.patch` ao GitHub para corrigir o build Render
+- [x] Reexecutar o deploy Render depois de enviar o patch e validar a URL pública
+- [x] Garantir que `vite.config.ts` e arquivos de configuração essenciais estejam no GitHub
+- [x] Reexecutar o deploy Render após corrigir os arquivos ausentes — deploy 5172004 disparado e falha confirmada antes da correção estrutural seguinte
+- [x] Salvar checkpoint pós-correção da configuração Vite inline
+- [x] Confirmar no Render o resultado do deploy do commit 9fc2783 — falha confirmada por import antigo no bundle
+- [ ] Confirmar no painel Render o resultado dos commits 19530b0/c614ebb — URL respondeu HTTP 200, mas o status final do deploy ainda não foi confirmado no painel
