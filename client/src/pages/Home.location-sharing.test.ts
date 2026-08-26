@@ -40,8 +40,19 @@ describe("experiência de localização compartilhada", () => {
     expect(home).toContain("{partnerName} está em");
     expect(home).toContain("Foto de ${member.name ?? \"membro\"}");
     expect(home).toContain("placeAddress");
-    expect(home).toContain("address: placeAddress.trim() || null");
+    expect(home).toContain("const address = placeAddress.trim() || null");
+    expect(home).toContain("const fieldsWithoutAddress");
+    expect(home).toContain('result.error.code === "42703"');
     expect(home).toContain("Rodovia Presidente Dutra, 2550");
+  });
+
+  it("mantém os handlers desbloqueados após erro de persistência", () => {
+    expect(home).toContain('[Chat] Falha ao enviar mensagem');
+    expect(home).toContain('[Feed] Falha ao salvar memória');
+    expect(home).toContain('[Quiz] Falha ao guardar resposta');
+    expect(home).toContain('finally {\n      setSending(false);');
+    expect(home).toContain('finally {\n      setPosting(false);');
+    expect(home).toContain('finally {\n      setSavingPlace(false);');
   });
 
   it("preserva o contrato de pausa e a limpeza da coordenada", () => {
