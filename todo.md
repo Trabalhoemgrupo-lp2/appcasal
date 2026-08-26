@@ -48,3 +48,6 @@
 - [x] Salvar checkpoint pós-correção da configuração Vite inline
 - [x] Confirmar no Render o resultado do deploy do commit 9fc2783 — falha confirmada por import antigo no bundle
 - [ ] Confirmar no painel Render o resultado dos commits 19530b0/c614ebb — URL respondeu HTTP 200, mas o status final do deploy ainda não foi confirmado no painel
+- [ ] Reproduzir e corrigir o bloqueio que impede responder mensagens e salvar respostas/lugares
+- [ ] Adicionar testes para o fluxo corrigido de resposta e salvamento
+- [ ] Validar no build, no preview e na URL pública após a correção
