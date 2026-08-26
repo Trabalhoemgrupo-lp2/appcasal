@@ -44,3 +44,7 @@ O repositório `Trabalhoemgrupo-lp2/appcasal` foi selecionado no Render. O servi
 Na retomada do formulário, as sete variáveis secretas aparecem preenchidas e mascaradas, o plano Free continua selecionado e a região Ohio permanece ativa. O botão `Deploy Web Service` ainda aparece desabilitado; a causa do bloqueio será verificada no formulário antes de tentar novamente.
 
 O serviço Render Free foi criado com sucesso como `appcasal-gratuito`, usando o repositório `Trabalhoemgrupo-lp2/appcasal`. O primeiro deploy foi iniciado no identificador `dep-da7343m7bikc73eo53sg` a partir do commit `fd6507d`; o painel ainda estava em estado `Building` na última verificação.
+
+O commit `172d328` foi enviado ao branch `main` com o arquivo no caminho correto. O Render detectou esse commit e criou um novo deploy automático, mas a sessão de acompanhamento precisou ser reaberta após um retorno intermediário a `about:blank`; a URL pública do serviço permanece `https://appcasal-gratuito.onrender.com`.
+
+O Render detectou o commit `172d328` e criou o terceiro deploy automático `dep-da735dvlk1mc73b1m7i0`, mas o status continuou como `Failed` após 19,4 segundos. A causa específica desse terceiro erro precisa ser lida nos logs do próprio deploy.
