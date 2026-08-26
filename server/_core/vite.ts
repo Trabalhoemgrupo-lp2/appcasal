@@ -4,7 +4,23 @@ import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-const viteConfig = {};
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+
+const projectRoot = path.resolve(import.meta.dirname, "../..");
+const viteConfig = {
+  plugins: [react(), tailwindcss()],
+  root: path.resolve(projectRoot, "client"),
+  publicDir: path.resolve(projectRoot, "client", "public"),
+  envDir: projectRoot,
+  resolve: {
+    alias: {
+      "@": path.resolve(projectRoot, "client", "src"),
+      "@shared": path.resolve(projectRoot, "shared"),
+      "@assets": path.resolve(projectRoot, "attached_assets"),
+    },
+  },
+};
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
