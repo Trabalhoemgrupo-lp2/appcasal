@@ -7390,7 +7390,8 @@ export default function Home() {
     const content = postDraft.trim();
     if (!content && !selectedPhoto) return;
     setPosting(true);
-    if (isPreview) {
+    try {
+      if (isPreview) {
       setPosts(current => [
         {
           id: crypto.randomUUID(),
@@ -7456,7 +7457,13 @@ export default function Home() {
       clearPhoto();
       toast.success("Memória guardada.");
     }
-    setPosting(false);
+      setPosting(false);
+    } catch (error) {
+      console.error("[Feed] Falha ao salvar memória", error);
+      toast.error("Não foi possível salvar agora. Tente novamente.");
+    } finally {
+      setPosting(false);
+    }
   }
 
   async function handleEditPost(post: Post) {
@@ -7669,7 +7676,8 @@ export default function Home() {
     const text = messageDraft.trim();
     if (!text) return;
     setSending(true);
-    if (isPreview) {
+    try {
+      if (isPreview) {
       setMessages(current => [
         ...current,
         {
@@ -7709,7 +7717,13 @@ export default function Home() {
       );
       setMessageDraft("");
     }
-    setSending(false);
+      setSending(false);
+    } catch (error) {
+      console.error("[Chat] Falha ao enviar mensagem", error);
+      toast.error("Não foi possível enviar agora. Tente novamente.");
+    } finally {
+      setSending(false);
+    }
   }
 
   async function handleEditMessage(message: ChatMessage) {
@@ -8504,86 +8518,110 @@ export default function Home() {
     const existing = editingPlaceId
       ? favoritePlaces.find(place => place.id === editingPlaceId)
       : undefined;
+    const address = placeAddress.trim() || null;
     const draft: FavoritePlace = {
       id: existing?.id ?? crypto.randomUUID(),
       created_by: existing?.created_by ?? currentUserId,
       title,
-      address: placeAddress.trim() || null,
+      address,
       meaning: placeMeaning.trim(),
       category: placeCategory,
       latitude: placeCoordinates.latitude,
       longitude: placeCoordinates.longitude,
       created_at: existing?.created_at ?? new Date().toISOString(),
     };
-    if (isPreview) {
+    try {
+      if (isPreview) {
+        setFavoritePlaces(current => [
+          draft,
+          ...current.filter(place => place.id !== draft.id),
+        ]);
+        resetPlaceDraft();
+        toast.success(
+          existing
+            ? "Lugar atualizado na prévia."
+            : "Lugar favorito guardado na prévia."
+        );
+        return;
+      }
+      if (!supabase || !session || !coupleId) {
+        toast.error("Entre no espaço do casal para guardar este lugar.");
+        return;
+      }
+
+      const fieldsWithAddress =
+        "id, created_by, title, address, meaning, category, latitude, longitude, created_at";
+      const fieldsWithoutAddress =
+        "id, created_by, title, meaning, category, latitude, longitude, created_at";
+      const baseValues = {
+        title,
+        meaning: placeMeaning.trim(),
+        category: placeCategory,
+        latitude: placeCoordinates.latitude,
+        longitude: placeCoordinates.longitude,
+      };
+      let result = existing
+        ? await supabase
+            .from("favorite_places")
+            .update({ ...baseValues, address })
+            .eq("id", existing.id)
+            .eq("couple_id", coupleId)
+            .select(fieldsWithAddress)
+            .single()
+        : await supabase
+            .from("favorite_places")
+            .insert({
+              couple_id: coupleId,
+              created_by: session.user.id,
+              ...baseValues,
+              address,
+            })
+            .select(fieldsWithAddress)
+            .single();
+
+      // Compatibilidade temporária com projetos Supabase que ainda não aplicaram
+      // a coluna address: o lugar continua sendo salvo, sem perder a posição.
+      if (result.error && (result.error.code === "42703" || result.status === 400)) {
+        result = existing
+          ? await supabase
+              .from("favorite_places")
+              .update(baseValues)
+              .eq("id", existing.id)
+              .eq("couple_id", coupleId)
+              .select(fieldsWithoutAddress)
+              .single()
+          : await supabase
+              .from("favorite_places")
+              .insert({
+                couple_id: coupleId,
+                created_by: session.user.id,
+                ...baseValues,
+              })
+              .select(fieldsWithoutAddress)
+              .single();
+      }
+      if (result.error) throw new Error(result.error.message);
+      if (!result.data) throw new Error("empty-place-result");
+      const saved = {
+        ...(result.data as Record<string, unknown>),
+        address: (result.data as Record<string, unknown>).address ?? address,
+      } as FavoritePlace;
       setFavoritePlaces(current => [
-        draft,
-        ...current.filter(place => place.id !== draft.id),
+        saved,
+        ...current.filter(place => place.id !== saved.id),
       ]);
       resetPlaceDraft();
-      setSavingPlace(false);
       toast.success(
         existing
-          ? "Lugar atualizado na prévia."
-          : "Lugar favorito guardado na prévia."
+          ? "Lugar atualizado para vocês."
+          : "Lugar favorito guardado para vocês."
       );
-      return;
-    }
-    if (!supabase || !session || !coupleId) {
+    } catch (error) {
+      console.error("[Places] Falha ao salvar lugar", error);
+      toast.error("Não foi possível salvar o lugar agora. Tente novamente.");
+    } finally {
       setSavingPlace(false);
-      toast.error("Entre no espaço do casal para guardar este lugar.");
-      return;
     }
-    const query = existing
-      ? supabase
-          .from("favorite_places")
-          .update({
-            title,
-            address: placeAddress.trim() || null,
-            meaning: placeMeaning.trim(),
-            category: placeCategory,
-            latitude: placeCoordinates.latitude,
-            longitude: placeCoordinates.longitude,
-          })
-          .eq("id", existing.id)
-          .eq("couple_id", coupleId)
-      : supabase
-          .from("favorite_places")
-          .insert({
-            couple_id: coupleId,
-            created_by: session.user.id,
-            title,
-            address: placeAddress.trim() || null,
-            meaning: placeMeaning.trim(),
-            category: placeCategory,
-            latitude: placeCoordinates.latitude,
-            longitude: placeCoordinates.longitude,
-          });
-    const { data, error } = await query
-      .select(
-        "id, created_by, title, address, meaning, category, latitude, longitude, created_at"
-      )
-      .single();
-    setSavingPlace(false);
-    if (error) {
-      toast.error(
-        existing
-          ? "Não foi possível atualizar o lugar agora."
-          : "Não foi possível guardar o lugar agora."
-      );
-      return;
-    }
-    const saved = data as FavoritePlace;
-    setFavoritePlaces(current => [
-      saved,
-      ...current.filter(place => place.id !== saved.id),
-    ]);
-    resetPlaceDraft();
-    toast.success(
-      existing
-        ? "Lugar atualizado para vocês."
-        : "Lugar favorito guardado para vocês."
-    );
   }
 
   function resetPlaceDraft() {
@@ -9104,50 +9142,63 @@ export default function Home() {
       toast.error("Entre no espaço do casal para responder ao quiz.");
       return;
     }
-    const { data, error } = await supabase
-      .from("couple_quiz_answers")
-      .upsert(answer, { onConflict: "couple_id,quiz_key,question_key,user_id" })
-      .select(
-        "couple_id, quiz_key, question_key, user_id, answer_value, created_at, updated_at"
-      )
-      .single();
-    if (error) {
-      toast.error(
-        "Não foi possível guardar a resposta. Execute a migration 0011."
-      );
-      return;
-    }
-    const saved = data as CoupleQuizAnswer;
-    setQuizAnswers(current => [
-      saved,
-      ...current.filter(
-        item =>
-          !(
-            item.quiz_key === saved.quiz_key &&
-            item.question_key === saved.question_key &&
-            item.user_id === saved.user_id
-          )
-      ),
-    ]);
-    const { data: revealedAnswers } = await supabase
-      .from("couple_quiz_answers")
-      .select(
-        "couple_id, quiz_key, question_key, user_id, answer_value, created_at, updated_at"
-      )
-      .eq("couple_id", coupleId)
-      .eq("quiz_key", quizKey)
-      .eq("question_key", questionKey);
-    if (revealedAnswers) {
-      const revealed = revealedAnswers as CoupleQuizAnswer[];
+    try {
+      const { data, error } = await supabase
+        .from("couple_quiz_answers")
+        .upsert(answer, {
+          onConflict: "couple_id,quiz_key,question_key,user_id",
+        })
+        .select(
+          "couple_id, quiz_key, question_key, user_id, answer_value, created_at, updated_at"
+        )
+        .single();
+      if (error) {
+        if (error.code === "42P17") quizAnswersRlsBlockedRef.current = true;
+        toast.error(
+          error.code === "42P17"
+            ? "O quiz está temporariamente indisponível. O administrador precisa corrigir a política de segurança do Supabase."
+            : "Não foi possível guardar a resposta. Tente novamente."
+        );
+        return;
+      }
+      const saved = data as CoupleQuizAnswer;
       setQuizAnswers(current => [
-        ...revealed,
+        saved,
         ...current.filter(
           item =>
-            !(item.quiz_key === quizKey && item.question_key === questionKey)
+            !(
+              item.quiz_key === saved.quiz_key &&
+              item.question_key === saved.question_key &&
+              item.user_id === saved.user_id
+            )
         ),
       ]);
+      const { data: revealedAnswers, error: revealError } = await supabase
+        .from("couple_quiz_answers")
+        .select(
+          "couple_id, quiz_key, question_key, user_id, answer_value, created_at, updated_at"
+        )
+        .eq("couple_id", coupleId)
+        .eq("quiz_key", quizKey)
+        .eq("question_key", questionKey);
+      if (revealError?.code === "42P17") {
+        quizAnswersRlsBlockedRef.current = true;
+      }
+      if (revealedAnswers) {
+        const revealed = revealedAnswers as CoupleQuizAnswer[];
+        setQuizAnswers(current => [
+          ...revealed,
+          ...current.filter(
+            item =>
+              !(item.quiz_key === quizKey && item.question_key === questionKey)
+          ),
+        ]);
+      }
+      toast.success("Resposta lacrada até a outra pessoa responder.");
+    } catch (error) {
+      console.error("[Quiz] Falha ao guardar resposta", error);
+      toast.error("Não foi possível guardar a resposta agora. Tente novamente.");
     }
-    toast.success("Resposta lacrada até a outra pessoa responder.");
   }
 
   async function handleConnectSpotify() {
