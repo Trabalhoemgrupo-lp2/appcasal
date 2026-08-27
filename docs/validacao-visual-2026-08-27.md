@@ -11,3 +11,5 @@ A revisão móvel posterior confirmou a navegação da aba como **Galeria de voc
 A aba **Galeria de vocês** também foi verificada em viewport desktop de 1280×720 px. O cabeçalho, o Composer e o estado vazio ocupam a coluna principal sem quebrar o trilho lateral. A grade quadrada e o visualizador ficam disponíveis quando a conta autenticada tiver mídias reais.
 
 A nova versão foi revisada em 390×844 px e 1280×720 px. Em ambos os tamanhos, o cabeçalho escuro “Fototeca”, a data/estado da coleção, a ação **Selecionar**, o botão compacto para adicionar mídia e a barra inferior **Anos / Meses / Tudo / busca** mantêm a hierarquia visual inspirada na fototeca do telefone. O estado vazio não cria cartões redundantes; com mídias reais, a grade passa a usar três colunas no celular e mais colunas no desktop.
+
+A Fototeca simplificada foi revisada em 390×844 px e 1280×720 px. O bloco de memória/legenda não aparece mais; há apenas o botão **Enviar fotos e vídeos**, com indicação de seleção múltipla, seguido do estado vazio da galeria e da barra Anos/Meses/Tudo/busca. O cabeçalho, a ação Selecionar e o aviso de privacidade continuam legíveis e acessíveis nos dois tamanhos.
