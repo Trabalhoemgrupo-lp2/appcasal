@@ -75,3 +75,11 @@
 - [ ] Validar a Fototeca autenticada com mídia real em mobile: grade contínua, busca, filtros Anos/Meses/Tudo, seleção múltipla e ações em lote
 - [ ] Validar a Fototeca autenticada com mídia real em desktop: grade contínua, visualizador, navegação, download e exclusão
 - [ ] Registrar evidência da UI publicada da Fototeca com mídias reais após o deploy
+- [x] Permitir selecionar vários arquivos de foto e vídeo pelo botão direto da Fototeca
+- [x] Remover a etapa de previews individuais conforme solicitado; a seleção múltipla envia diretamente pelo botão
+- [x] Enviar mídias em lote com progresso e falhas individuais sem travar o formulário
+- [ ] Adicionar testes e validar upload múltiplo em mobile, build e publicação
+- [x] Remover o bloco de memória/legenda da Fototeca
+- [x] Deixar um único botão de upload múltiplo para fotos e vídeos
+- [x] Manter ações de abrir, baixar e excluir mídias na Fototeca
+- [ ] Validar a simplificação em mobile, desktop, testes, build e publicação
