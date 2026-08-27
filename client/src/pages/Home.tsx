@@ -65,6 +65,7 @@ import {
   CloudSun,
   Compass,
   Copy,
+  Download,
   ExternalLink,
   Gamepad,
   Heart,
@@ -123,8 +124,15 @@ const PHOTO_BUCKET = "memory-photos";
 const AVATAR_BUCKET = "profile-avatars";
 const MUSIC_COVER_BUCKET = "music-room-covers";
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
 const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPTED_MEMORY_MEDIA_TYPES = [
+  ...ACCEPTED_PHOTO_TYPES,
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+];
 const MUSIC_REACTION_EMOJIS = ["❤️", "🥹", "✨", "🫶", "🔥", "🎶"] as const;
 const PROXIMITY_COOLDOWN_MS = 6 * 60 * 60 * 1_000;
 // Domínio publicado incluído também na allowlist de Redirect URLs do Supabase Auth.
@@ -215,6 +223,7 @@ type Post = {
   author_name: string;
   image_path?: string | null;
   image_url?: string;
+  media_type?: "image" | "video";
 };
 
 type ChatMessage = {
@@ -663,6 +672,101 @@ function relationshipDays(startedOn: string) {
   return Math.max(0, Math.floor(difference / 86_400_000) + 1);
 }
 
+type RelationshipElapsed = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+export function relationshipElapsed(startedOn: string, now = Date.now()): RelationshipElapsed | null {
+  if (!hasFourDigitYear(startedOn)) return null;
+  const start = dateFromKey(startedOn);
+  if (Number.isNaN(start.getTime())) return null;
+  const startAt = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate(),
+    0,
+    0,
+    0,
+    0
+  ).getTime();
+  const totalSeconds = Math.max(0, Math.floor((now - startAt) / 1000));
+  return {
+    days: Math.floor(totalSeconds / 86_400),
+    hours: Math.floor((totalSeconds % 86_400) / 3_600),
+    minutes: Math.floor((totalSeconds % 3_600) / 60),
+    seconds: totalSeconds % 60,
+  };
+}
+
+function useRelationshipElapsed(startedOn: string) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!hasFourDigitYear(startedOn)) return;
+    const tick = () => setNow(Date.now());
+    tick();
+    const interval = window.setInterval(tick, 1_000);
+    return () => window.clearInterval(interval);
+  }, [startedOn]);
+
+  return relationshipElapsed(startedOn, now);
+}
+
+function formatCounterUnit(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function RelationshipElapsedGrid({
+  elapsed,
+  inverted = false,
+}: {
+  elapsed: RelationshipElapsed | null;
+  inverted?: boolean;
+}) {
+  const units = [
+    [elapsed?.days ?? null, "dias"],
+    [elapsed?.hours ?? null, "horas"],
+    [elapsed?.minutes ?? null, "minutos"],
+    [elapsed?.seconds ?? null, "segundos"],
+  ] as const;
+  return (
+    <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
+      {units.map(([value, label]) => (
+        <div
+          className={
+            inverted
+              ? "rounded-2xl border border-white/12 bg-white/8 p-3 sm:p-4"
+              : "rounded-2xl border border-ink/8 bg-paper/75 p-3 sm:p-4"
+          }
+          key={label}
+        >
+          <p
+            className={
+              inverted
+                ? "font-display text-2xl tracking-[-0.05em] text-white sm:text-3xl"
+                : "font-display text-2xl tracking-[-0.05em] text-ink sm:text-3xl"
+            }
+          >
+            {value === null ? "—" : formatCounterUnit(value)}
+          </p>
+          <p
+            className={
+              inverted
+                ? "mt-1 text-[0.62rem] font-bold text-white/62 sm:text-xs"
+                : "mt-1 text-[0.62rem] font-bold text-ink/52 sm:text-xs"
+            }
+          >
+            {label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function weatherPresentation(code: number | null) {
   if (code === null) return { icon: "◌", label: "Aguardando clima" };
   if ([0, 1].includes(code)) return { icon: "☀️", label: "Céu aberto" };
@@ -806,6 +910,14 @@ function nameFromProfile(profile: DatabasePost["profiles"]) {
   return profile?.name ?? "Alguém";
 }
 
+function isVideoPath(path?: string | null) {
+  return Boolean(path && /\.(mp4|webm|mov)(?:$|[?#])/i.test(path));
+}
+
+function isVideoName(name?: string | null) {
+  return Boolean(name && /\.(mp4|webm|mov)$/i.test(name));
+}
+
 function mapPost(row: DatabasePost, imageUrl?: string): Post {
   return {
     id: row.id,
@@ -815,6 +927,7 @@ function mapPost(row: DatabasePost, imageUrl?: string): Post {
     author_name: nameFromProfile(row.profiles),
     image_path: row.image_path,
     image_url: imageUrl,
+    media_type: isVideoPath(row.image_path) ? "video" : "image",
   };
 }
 
@@ -3463,11 +3576,22 @@ function Composer({
       />
       {photoPreview && (
         <div className="relative mt-2 overflow-hidden rounded-xl border border-ink/8 bg-paper">
-          <img
-            alt={photoName ? `Prévia de ${photoName}` : "Prévia da foto"}
-            className="max-h-64 w-full object-cover"
-            src={photoPreview}
-          />
+          {isVideoName(photoName) ? (
+            <video
+              aria-label={photoName ? `Prévia de ${photoName}` : "Prévia do vídeo"}
+              className="max-h-64 w-full object-cover"
+              controls
+              muted
+              preload="metadata"
+              src={photoPreview}
+            />
+          ) : (
+            <img
+              alt={photoName ? `Prévia de ${photoName}` : "Prévia da foto"}
+              className="max-h-64 w-full object-cover"
+              src={photoPreview}
+            />
+          )}
           <button
             aria-label="Remover foto"
             className="absolute right-2 top-2 rounded-full bg-ink/75 p-2 text-white transition hover:bg-hibiscus"
@@ -3480,7 +3604,7 @@ function Composer({
       )}
       <div className="mt-3 flex items-center justify-between border-t border-ink/7 pt-3">
         <input
-          accept={ACCEPTED_PHOTO_TYPES.join(",")}
+          accept={ACCEPTED_MEMORY_MEDIA_TYPES.join(",")}
           className="hidden"
           onChange={event => onPhotoChange(event.target.files?.[0] ?? null)}
           ref={inputRef}
@@ -3492,7 +3616,7 @@ function Composer({
           type="button"
         >
           <ImagePlus className="h-4 w-4" />
-          {photoName ?? "adicionar foto"}
+          {photoName ?? "adicionar foto ou vídeo"}
         </button>
         <Button
           className="h-9 rounded-lg bg-hibiscus px-4 text-xs font-extrabold text-white shadow-[0_8px_16px_rgba(201,87,103,0.2)] hover:bg-hibiscus/90"
@@ -3741,12 +3865,34 @@ function MomentsPanel({
   onDeletePost: (post: Post) => void;
 }) {
   const photoPosts = posts.filter(post => Boolean(post.image_url));
+
+  async function downloadMedia(post: Post) {
+    if (!post.image_url) return;
+    try {
+      const response = await fetch(post.image_url);
+      if (!response.ok) throw new Error("download failed");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = `appcasal-${post.id}.${post.media_type === "video" ? "mp4" : "jpg"}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+      toast.success("Arquivo baixado para o seu dispositivo.");
+    } catch {
+      window.open(post.image_url, "_blank", "noopener,noreferrer");
+      toast.info("Abrimos o arquivo em uma nova aba para você salvar.");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="romance-opening">
-        <p className="memory-marker">álbum compartilhado</p>
+        <p className="memory-marker">galeria privada</p>
         <h2 className="mt-3 max-w-xl font-display text-[2.25rem] leading-[0.94] tracking-[-0.06em] text-ink sm:text-4xl">
-          Fotos que fazem o tempo <span className="love-underline">parar um pouco.</span>
+          Fotos e vídeos que fazem o tempo <span className="love-underline">parar um pouco.</span>
         </h2>
         <p className="mt-4 max-w-xl text-sm leading-6 text-ink/62">
           Guardem aqui os detalhes que querem rever. Cada foto continua privada
@@ -3771,7 +3917,7 @@ function MomentsPanel({
               Um atalho para abrir um momento.
             </h3>
             <p className="mt-2 max-w-xl text-xs leading-5 text-ink/52">
-              Escolha uma foto para o cartão de Momentos no aplicativo. No
+              Escolha uma foto ou vídeo para o atalho da Galeria no aplicativo. No
               telefone, instale o site na tela inicial para abrir o álbum com um toque.
             </p>
           </div>
@@ -3783,33 +3929,47 @@ function MomentsPanel({
       {photoPosts.length === 0 ? (
         <section className="rounded-[1.55rem] border border-dashed border-ink/15 bg-paper/80 px-6 py-12 text-center">
           <ImagePlus className="mx-auto h-7 w-7 text-hibiscus" />
-          <h3 className="mt-4 font-display text-2xl text-ink">O álbum começa com uma foto.</h3>
+          <h3 className="mt-4 font-display text-2xl text-ink">A galeria começa com uma foto ou vídeo.</h3>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-ink/55">
-            Escolham uma imagem de um dia simples ou de uma data importante para abrir esta página.
+            Escolham uma foto ou vídeo de um dia simples ou de uma data importante para abrir esta página.
           </p>
         </section>
       ) : (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {photoPosts.map(post => (
             <article className="group overflow-hidden rounded-[1.35rem] border border-ink/8 bg-white shadow-[0_10px_24px_rgba(55,35,42,0.06)]" key={post.id}>
-              <img alt={`Momento compartilhado por ${post.author_name}`} className="aspect-[4/3] w-full object-cover" src={post.image_url} />
+              <button
+                aria-label={`Visualizar ${post.media_type === "video" ? "vídeo" : "foto"} de ${post.author_name}`}
+                className="relative block w-full cursor-zoom-in bg-ink/5 text-left"
+                onClick={() => post.image_url && window.open(post.image_url, "_blank", "noopener,noreferrer")}
+                type="button"
+              >
+                {post.media_type === "video" ? (
+                  <video className="aspect-[4/3] w-full object-cover" muted preload="metadata" src={post.image_url} />
+                ) : (
+                  <img alt={`Foto compartilhada por ${post.author_name}`} className="aspect-[4/3] w-full object-cover" src={post.image_url} />
+                )}
+                {post.media_type === "video" && (
+                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-ink/75 px-3 py-1.5 text-xs font-extrabold text-white">
+                    <Play className="h-3 w-3 fill-current" /> vídeo
+                  </span>
+                )}
+              </button>
               <div className="p-4">
                 <p className="line-clamp-2 text-sm leading-6 text-ink/72">{post.content || "Um momento guardado em silêncio."}</p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-ink/48">
                   <span>{formatDate(post.created_at)}</span>
                   <div className="flex items-center gap-1.5">
-                    <button
-                      aria-pressed={widgetMomentId === post.id}
-                      className={`rounded-full px-3 py-1.5 transition ${widgetMomentId === post.id ? "bg-hibiscus text-white" : "bg-paper text-ink/60 hover:bg-hibiscus/12 hover:text-hibiscus"}`}
-                      onClick={() => onChooseWidgetMoment(post)}
-                      type="button"
-                    >
+                    <button aria-label="Baixar mídia" className="inline-flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 text-ink/60 transition hover:bg-hibiscus/12 hover:text-hibiscus" onClick={() => void downloadMedia(post)} type="button">
+                      <Download className="h-3.5 w-3.5" /> baixar
+                    </button>
+                    <button aria-pressed={widgetMomentId === post.id} className={`rounded-full px-3 py-1.5 transition ${widgetMomentId === post.id ? "bg-hibiscus text-white" : "bg-paper text-ink/60 hover:bg-hibiscus/12 hover:text-hibiscus"}`} onClick={() => onChooseWidgetMoment(post)} type="button">
                       {widgetMomentId === post.id ? "em destaque" : "destacar"}
                     </button>
                     {post.author_id === currentUserId && (
                       <>
-                        <button aria-label={`Editar momento de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-paper hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onEditPost(post)} type="button"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button aria-label={`Apagar momento de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-hibiscus/10 hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onDeletePost(post)} type="button"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button aria-label={`Editar mídia de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-paper hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onEditPost(post)} type="button"><Pencil className="h-3.5 w-3.5" /></button>
+                        <button aria-label={`Apagar mídia de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-hibiscus/10 hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onDeletePost(post)} type="button"><Trash2 className="h-3.5 w-3.5" /></button>
                       </>
                     )}
                   </div>
@@ -4253,7 +4413,7 @@ function RelationshipCounterPanel({
   const relationshipTime = relationshipStartedOn
     ? formatRelationshipTime(relationshipStartedOn)
     : null;
-  const daysTogether = relationshipDays(relationshipStartedOn);
+  const elapsed = useRelationshipElapsed(relationshipStartedOn);
   const relationshipStart = relationshipStartedOn
     ? dateFromKey(relationshipStartedOn)
     : null;
@@ -4309,28 +4469,12 @@ function RelationshipCounterPanel({
           </div>
           <Heart className="h-6 w-6 shrink-0 text-hibiscus-light" aria-hidden="true" />
         </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <article className="rounded-2xl border border-white/12 bg-white/8 p-4">
-            <p className="font-display text-3xl tracking-[-0.05em]">
-              {daysTogether ?? "—"}
-            </p>
-            <p className="mt-1 text-xs font-bold text-white/62">
-              {daysTogether === 1 ? "dia vivido" : "dias vividos"}
-            </p>
-          </article>
-          <article className="rounded-2xl border border-white/12 bg-white/8 p-4">
-            <p className="font-display text-3xl tracking-[-0.05em]">
-              {relationshipTime?.years ?? "—"}
-            </p>
-            <p className="mt-1 text-xs font-bold text-white/62">anos completos</p>
-          </article>
-          <article className="rounded-2xl border border-white/12 bg-white/8 p-4">
-            <p className="font-display text-3xl tracking-[-0.05em]">
-              {relationshipTime?.months ?? "—"}
-            </p>
-            <p className="mt-1 text-xs font-bold text-white/62">meses deste ano</p>
-          </article>
-        </div>
+        <RelationshipElapsedGrid elapsed={elapsed} inverted />
+        {relationshipTime && (
+          <p className="mt-3 text-xs font-bold text-white/62">
+            {relationshipTime.years} {relationshipTime.years === 1 ? "ano" : "anos"} e {relationshipTime.months} {relationshipTime.months === 1 ? "mês" : "meses"} completos.
+          </p>
+        )}
         <div className="mt-5 flex flex-col gap-3 border-t border-white/12 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-xs leading-5 text-white/67">
             {canInstallCounter
@@ -5910,7 +6054,7 @@ function WidgetsPanel({
   const partnerBattery = batterySnapshots.find(
     snapshot => snapshot.user_id !== currentUserId
   );
-  const daysTogether = relationshipDays(relationshipStartedOn);
+  const elapsed = useRelationshipElapsed(relationshipStartedOn);
   const weather = weatherPresentation(weatherSnapshot?.weather_code ?? null);
 
   return (
@@ -5937,14 +6081,9 @@ function WidgetsPanel({
         <article className="paper-note relative overflow-hidden rounded-[1.55rem] border border-ink/8 bg-white p-4 sm:p-5 shadow-[0_12px_28px_rgba(103,65,72,0.05)]">
           <Heart className="absolute right-4 top-4 h-5 w-5 text-hibiscus/45" />
           <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.16em] text-hibiscus">
-            dias juntos
+            tempo de história
           </p>
-          <p className="mt-4 font-display text-5xl tracking-[-0.06em] text-ink">
-            {daysTogether ?? "—"}
-          </p>
-          <p className="mt-1 text-sm font-bold text-ink/62">
-            {daysTogether === 1 ? "dia de história" : "dias de história"}
-          </p>
+          <RelationshipElapsedGrid elapsed={elapsed} />
           <p className="mt-4 text-xs leading-5 text-ink/46">
             {relationshipStartedOn
               ? `Contando desde ${formatDate(`${relationshipStartedOn}T12:00:00`)}.`
@@ -7328,12 +7467,14 @@ export default function Home() {
 
   function handlePhotoChange(file: File | null) {
     if (!file) return;
-    if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
-      toast.error("Escolha uma foto JPG, PNG ou WebP.");
+    const isVideo = file.type.startsWith("video/");
+    if (!ACCEPTED_MEMORY_MEDIA_TYPES.includes(file.type)) {
+      toast.error("Escolha uma foto JPG, PNG, WebP ou um vídeo MP4/WebM/MOV.");
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
-      toast.error("A foto deve ter no máximo 5 MB.");
+    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
+    if (file.size > maxBytes) {
+      toast.error(isVideo ? "O vídeo deve ter no máximo 50 MB." : "A foto deve ter no máximo 5 MB.");
       return;
     }
     clearPhoto();
@@ -7406,6 +7547,7 @@ export default function Home() {
           author_id: currentUserId,
           author_name: "Você",
           image_url: photoPreview,
+          media_type: selectedPhoto?.type.startsWith("video/") ? "video" : "image",
         },
         ...current,
       ]);
@@ -7537,7 +7679,7 @@ export default function Home() {
     if (!post.image_url) return;
     window.localStorage.setItem("appcasal:moment-widget", post.id);
     setWidgetMomentId(post.id);
-    toast.success("Foto escolhida para abrir seus Momentos.");
+    toast.success("Mídia escolhida para abrir a Galeria.");
   }
 
   function resetLibraryDraft() {
@@ -9700,7 +9842,7 @@ export default function Home() {
 
   const pageTitle = {
     inicio: "Entre páginas, vocês",
-    momentos: "Momentos de vocês",
+    momentos: "Galeria de vocês",
     chat: "Conversa privada",
     planos: "Próximos capítulos",
     contagem: "O tempo de vocês",
@@ -9713,7 +9855,7 @@ export default function Home() {
   }[tab];
   const navItems: { id: AppTab; label: string; icon: typeof HomeIcon }[] = [
     { id: "inicio", label: "Início", icon: HomeIcon },
-    { id: "momentos", label: "Momentos", icon: Camera },
+    { id: "momentos", label: "Galeria", icon: Camera },
     { id: "chat", label: "Chat", icon: MessageCircle },
     { id: "planos", label: "Planos", icon: CalendarDays },
     { id: "contagem", label: "Tempo", icon: Heart },
