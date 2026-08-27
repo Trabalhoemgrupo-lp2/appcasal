@@ -91,6 +91,7 @@ import {
   RefreshCw,
   Send,
   Settings2,
+  Search,
   Sparkles,
   Trash2,
   UserPlus,
@@ -3867,6 +3868,28 @@ function MomentsPanel({
 }) {
   const photoPosts = posts.filter(post => Boolean(post.image_url));
   const [selectedMedia, setSelectedMedia] = useState<Post | null>(null);
+  const [galleryFilter, setGalleryFilter] = useState<"years" | "months" | "all">("all");
+  const [gallerySearch, setGallerySearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showComposer, setShowComposer] = useState(false);
+  const latestMediaDate = photoPosts[0]?.created_at ? new Date(photoPosts[0].created_at) : null;
+  const galleryDateLabel = latestMediaDate && !Number.isNaN(latestMediaDate.getTime())
+    ? new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" }).format(latestMediaDate)
+    : "coleção privada";
+  const visiblePhotoPosts = useMemo(() => {
+    const search = gallerySearch.trim().toLocaleLowerCase();
+    return photoPosts.filter(post => {
+      const postDate = new Date(post.created_at);
+      const matchesSearch = !search || `${post.author_name} ${post.content ?? ""}`.toLocaleLowerCase().includes(search);
+      if (!matchesSearch) return false;
+      if (!latestMediaDate || Number.isNaN(postDate.getTime())) return galleryFilter === "all";
+      if (galleryFilter === "years") return postDate.getFullYear() === latestMediaDate.getFullYear();
+      if (galleryFilter === "months") return postDate.getFullYear() === latestMediaDate.getFullYear() && postDate.getMonth() === latestMediaDate.getMonth();
+      return true;
+    });
+  }, [galleryFilter, gallerySearch, latestMediaDate, photoPosts]);
 
   useEffect(() => {
     if (!selectedMedia) return;
@@ -3877,13 +3900,35 @@ function MomentsPanel({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedMedia, photoPosts]);
+  }, [selectedMedia, visiblePhotoPosts]);
 
   function moveMedia(offset: number) {
-    if (!selectedMedia || photoPosts.length < 2) return;
-    const currentIndex = photoPosts.findIndex(post => post.id === selectedMedia.id);
-    const nextIndex = (currentIndex + offset + photoPosts.length) % photoPosts.length;
-    setSelectedMedia(photoPosts[nextIndex] ?? null);
+    if (!selectedMedia || visiblePhotoPosts.length < 2) return;
+    const currentIndex = visiblePhotoPosts.findIndex(post => post.id === selectedMedia.id);
+    const nextIndex = (currentIndex + offset + visiblePhotoPosts.length) % visiblePhotoPosts.length;
+    setSelectedMedia(visiblePhotoPosts[nextIndex] ?? null);
+  }
+
+  function toggleSelected(postId: string) {
+    setSelectedIds(current => current.includes(postId) ? current.filter(id => id !== postId) : [...current, postId]);
+  }
+
+  function closeSelectionMode() {
+    setSelectionMode(false);
+    setSelectedIds([]);
+  }
+
+  async function downloadSelectedMedia() {
+    const selected = photoPosts.filter(post => selectedIds.includes(post.id));
+    for (const post of selected) await downloadMedia(post);
+    closeSelectionMode();
+  }
+
+  function deleteSelectedMedia() {
+    photoPosts
+      .filter(post => selectedIds.includes(post.id) && post.author_id === currentUserId)
+      .forEach(post => onDeletePost(post));
+    closeSelectionMode();
   }
 
   async function downloadMedia(post: Post) {
@@ -3909,43 +3954,56 @@ function MomentsPanel({
 
   return (
     <div className="space-y-6">
-      <section className="romance-opening">
-        <p className="memory-marker">galeria privada</p>
-        <h2 className="mt-3 max-w-xl font-display text-[2.25rem] leading-[0.94] tracking-[-0.06em] text-ink sm:text-4xl">
-          Fotos e vídeos que fazem o tempo <span className="love-underline">parar um pouco.</span>
-        </h2>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-ink/62">
-          Guardem aqui os detalhes que querem rever. Cada foto continua privada
-          para quem escreve este caderno com vocês.
-        </p>
-      </section>
-      <Composer
-        busy={busy}
-        onChange={onChange}
-        onClearPhoto={onClearPhoto}
-        onPhotoChange={onPhotoChange}
-        onSubmit={onSubmit}
-        photoName={photoName}
-        photoPreview={photoPreview}
-        value={value}
-      />
-      <section className="paper-note rounded-[1.5rem] border border-ink/8 bg-white/70 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <section className="overflow-hidden rounded-[1.4rem] bg-[#171417] text-white shadow-[0_18px_48px_rgba(30,18,25,0.18)]">
+        <div className="flex items-start justify-between gap-4 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
           <div>
-            <p className="memory-marker">foto em destaque</p>
-            <h3 className="mt-1 font-display text-2xl tracking-[-0.04em] text-ink">
-              Um atalho para abrir um momento.
-            </h3>
-            <p className="mt-2 max-w-xl text-xs leading-5 text-ink/52">
-              Escolha uma foto ou vídeo para o atalho da Galeria no aplicativo. No
-              telefone, instale o site na tela inicial para abrir o álbum com um toque.
-            </p>
+            <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.18em] text-white/52">seu álbum privado</p>
+            <h2 className="mt-1 font-display text-[2.8rem] leading-none tracking-[-0.07em] text-white sm:text-5xl">Fototeca</h2>
+            <p className="mt-2 text-sm font-semibold text-white/58">{galleryDateLabel}</p>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-hibiscus/10 px-3 py-2 text-xs font-extrabold text-hibiscus">
-            <Camera className="h-3.5 w-3.5" /> somente vocês
-          </span>
+          <div className="flex items-center gap-2">
+            <button aria-label={searchOpen ? "Fechar busca" : "Pesquisar na fototeca"} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/18" onClick={() => setSearchOpen(current => !current)} type="button">
+              <Search className="h-4 w-4" />
+            </button>
+            <button aria-pressed={selectionMode} className={`rounded-full px-4 py-2.5 text-xs font-extrabold transition ${selectionMode ? "bg-white text-ink" : "bg-white/10 text-white hover:bg-white/18"}`} onClick={() => selectionMode ? closeSelectionMode() : setSelectionMode(true)} type="button">
+              {selectionMode ? `${selectedIds.length || "0"} selecionadas` : "Selecionar"}
+            </button>
+          </div>
+        </div>
+        {searchOpen && (
+          <label className="mx-4 mb-4 flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-white sm:mx-6">
+            <Search className="h-4 w-4 shrink-0 text-white/55" />
+            <input autoFocus className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/42" onChange={event => setGallerySearch(event.target.value)} placeholder="Buscar por pessoa ou legenda" value={gallerySearch} />
+          </label>
+        )}
+        <div className="flex items-center justify-between border-t border-white/10 px-4 py-3 text-xs font-bold text-white/50 sm:px-6">
+          <span>{photoPosts.length} {photoPosts.length === 1 ? "item" : "itens"}</span>
+          <span className="inline-flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" /> somente vocês</span>
         </div>
       </section>
+      {showComposer ? (
+        <section className="rounded-[1.35rem] border border-ink/8 bg-white p-3 shadow-[0_10px_24px_rgba(55,35,42,0.06)]">
+          <div className="mb-2 flex items-center justify-between px-2">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-hibiscus">Adicionar à Fototeca</p>
+            <button className="text-xs font-bold text-ink/48 hover:text-hibiscus" onClick={() => setShowComposer(false)} type="button">fechar</button>
+          </div>
+          <Composer
+            busy={busy}
+            onChange={onChange}
+            onClearPhoto={onClearPhoto}
+            onPhotoChange={onPhotoChange}
+            onSubmit={() => { onSubmit(); setShowComposer(false); }}
+            photoName={photoName}
+            photoPreview={photoPreview}
+            value={value}
+          />
+        </section>
+      ) : (
+        <button className="flex w-full items-center justify-between rounded-[1.2rem] border border-ink/8 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(55,35,42,0.05)] transition hover:border-hibiscus/35 hover:bg-hibiscus/[0.03]" onClick={() => setShowComposer(true)} type="button">
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-ink/70"><Plus className="h-4 w-4 text-hibiscus" /> adicionar fotos ou vídeos</span>
+          <ChevronRight className="h-4 w-4 text-ink/35" />
+        </button>
+      )}
       {photoPosts.length === 0 ? (
         <section className="rounded-[1.55rem] border border-dashed border-ink/15 bg-paper/80 px-6 py-12 text-center">
           <ImagePlus className="mx-auto h-7 w-7 text-hibiscus" />
@@ -3956,12 +4014,15 @@ function MomentsPanel({
         </section>
       ) : (
         <section className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-5 xl:grid-cols-6">
-          {photoPosts.map(post => (
-            <article className="group relative aspect-square overflow-hidden rounded-xl border border-ink/8 bg-white shadow-[0_6px_16px_rgba(55,35,42,0.06)]" key={post.id}>
+          {visiblePhotoPosts.map(post => {
+            const selected = selectedIds.includes(post.id);
+            return (
+            <article className={`group relative aspect-square overflow-hidden rounded-xl border bg-white shadow-[0_6px_16px_rgba(55,35,42,0.06)] ${selected ? "border-hibiscus ring-2 ring-hibiscus/35" : "border-ink/8"}`} key={post.id}>
               <button
                 aria-label={`Visualizar ${post.media_type === "video" ? "vídeo" : "foto"} de ${post.author_name}`}
                 className="relative block h-full w-full cursor-zoom-in bg-ink/5 text-left"
-                onClick={() => setSelectedMedia(post)}
+                aria-pressed={selectionMode ? selected : undefined}
+                onClick={() => selectionMode ? toggleSelected(post.id) : setSelectedMedia(post)}
                 type="button"
               >
                 {post.media_type === "video" ? (
@@ -3974,15 +4035,37 @@ function MomentsPanel({
                   {post.media_type === "video" && <Play className="h-3 w-3 shrink-0 fill-current" />}
                 </span>
               </button>
-              {widgetMomentId === post.id && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-hibiscus px-2 py-1 text-[0.56rem] font-extrabold text-white">destaque</span>}
-              {post.author_id === currentUserId && (
+              {selectionMode && <span className={`pointer-events-none absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full border-2 ${selected ? "border-hibiscus bg-hibiscus text-white" : "border-white bg-ink/35 text-transparent"}`}><Check className="h-3.5 w-3.5" /></span>}
+              {widgetMomentId === post.id && !selectionMode && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-hibiscus px-2 py-1 text-[0.56rem] font-extrabold text-white">destaque</span>}
+              {post.author_id === currentUserId && !selectionMode && (
                 <button aria-label="Excluir mídia" className="absolute right-2 top-2 rounded-full bg-ink/70 p-1.5 text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100" onClick={() => onDeletePost(post)} type="button">
                   <Trash2 className="h-3 w-3" />
                 </button>
               )}
             </article>
-          ))}
+            );
+          })}
         </section>
+      )}
+      {selectionMode ? (
+        <div className="sticky bottom-24 z-20 flex items-center justify-between gap-2 rounded-full bg-[#171417] p-2 text-white shadow-[0_12px_32px_rgba(30,18,25,0.25)] lg:bottom-6">
+          <button className="rounded-full px-3 py-2 text-xs font-extrabold text-white/70 transition hover:bg-white/10 hover:text-white" onClick={() => setSelectedIds(selectedIds.length === visiblePhotoPosts.length ? [] : visiblePhotoPosts.map(post => post.id))} type="button">
+            {selectedIds.length === visiblePhotoPosts.length && visiblePhotoPosts.length > 0 ? "desmarcar tudo" : "selecionar tudo"}
+          </button>
+          <span className="text-xs font-bold text-white/70">{selectedIds.length} selecionadas</span>
+          <div className="flex items-center gap-1">
+            <button aria-label="Baixar mídias selecionadas" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-35" disabled={selectedIds.length === 0} onClick={() => void downloadSelectedMedia()} type="button"><Download className="h-4 w-4" /></button>
+            <button aria-label="Excluir mídias selecionadas" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white transition hover:bg-hibiscus disabled:cursor-not-allowed disabled:opacity-35" disabled={selectedIds.length === 0} onClick={deleteSelectedMedia} type="button"><Trash2 className="h-4 w-4" /></button>
+            <button aria-label="Fechar seleção" className="grid h-9 w-9 place-items-center rounded-full bg-white text-ink transition hover:bg-white/85" onClick={closeSelectionMode} type="button"><X className="h-4 w-4" /></button>
+          </div>
+        </div>
+      ) : (
+        <div className="sticky bottom-24 z-20 flex items-center justify-center gap-1 rounded-full bg-[#171417] p-1.5 text-white shadow-[0_12px_32px_rgba(30,18,25,0.25)] lg:bottom-6">
+          {([['years', 'Anos'], ['months', 'Meses'], ['all', 'Tudo']] as const).map(([value, label]) => (
+            <button aria-pressed={galleryFilter === value} className={`rounded-full px-4 py-2.5 text-xs font-extrabold transition ${galleryFilter === value ? "bg-white text-ink" : "text-white/65 hover:bg-white/10 hover:text-white"}`} key={value} onClick={() => setGalleryFilter(value)} type="button">{label}</button>
+          ))}
+          <button aria-label="Pesquisar na fototeca" className="ml-1 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/18" onClick={() => setSearchOpen(current => !current)} type="button"><Search className="h-4 w-4" /></button>
+        </div>
       )}
       {selectedMedia?.image_url && (
         <div
