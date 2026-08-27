@@ -29,4 +29,16 @@ describe("galeria de fotos e vídeos", () => {
     expect(home).toContain('aria-label="Baixar mídias selecionadas"');
     expect(home).toContain('aria-label="Excluir mídias selecionadas"');
   });
+
+  it("usa um único botão para upload múltiplo e não exibe o Composer de memória", () => {
+    expect(home).toContain('multiple');
+    expect(home).toContain('aria-label="Enviar fotos e vídeos"');
+    expect(home).toContain("Você pode selecionar várias fotos e vídeos ao mesmo tempo.");
+    expect(home).toContain("handleGalleryUpload");
+    expect(home).toContain("setGalleryUploadProgress");
+    expect(home).toContain("onUploadFiles(Array.from(event.target.files ?? []))");
+    expect(home).toContain("for (const file of acceptedFiles)");
+    expect(home).toContain('supabase.storage.from(PHOTO_BUCKET).upload');
+    expect(home).toContain('setGalleryUploadProgress({ current: uploaded, total: acceptedFiles.length })');
+  });
 });
