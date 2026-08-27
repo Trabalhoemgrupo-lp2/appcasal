@@ -60,3 +60,7 @@
 - [x] Adicionar cobertura estrutural para formatos de mídia, navegação da Galeria e download
 - [ ] Validar a galeria em desktop/mobile, build e publicação — desktop/mobile e build concluídos; publicação após sincronização pendente
 - [x] Exibir no contador dias, horas, minutos e segundos com atualização contínua
+- [x] Reestruturar a Galeria para grade de miniaturas no padrão de telefone
+- [x] Adicionar visualização em tela cheia com navegação entre fotos e vídeos
+- [x] Adicionar ações de baixar e excluir na visualização de mídia
+- [ ] Validar a experiência da galeria de telefone em telas móveis e desktop
