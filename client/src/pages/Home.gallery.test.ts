@@ -19,4 +19,14 @@ describe("galeria de fotos e vídeos", () => {
     expect(home).toContain('aria-label="Baixar mídia"');
     expect(home).toContain("downloadMedia");
   });
+
+  it("oferece filtros de período, seleção múltipla e busca", () => {
+    expect(home).toContain('"years" | "months" | "all"');
+    expect(home).toContain("'Anos'");
+    expect(home).toContain("'Meses'");
+    expect(home).toContain("'Tudo'");
+    expect(home).toContain('placeholder="Buscar por pessoa ou legenda"');
+    expect(home).toContain('aria-label="Baixar mídias selecionadas"');
+    expect(home).toContain('aria-label="Excluir mídias selecionadas"');
+  });
 });
