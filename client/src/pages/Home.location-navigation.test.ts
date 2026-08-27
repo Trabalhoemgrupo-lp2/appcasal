@@ -33,7 +33,7 @@ describe("abas dedicadas", () => {
     expect(home).toMatch(/\{\s*id: "momentos",\s*label: "Galeria",\s*icon: Camera\s*\}/);
     expect(home).toContain('{tab === "momentos" && (');
     expect(home).toContain("<MomentsPanel");
-    expect(home).toContain("onChooseWidgetMoment={handleChooseWidgetMoment}");
+    expect(home).toContain("onUploadFiles={files =>");
     expect(home).toContain("ACCEPTED_MEMORY_MEDIA_TYPES");
     expect(home).toContain("downloadMedia");
   });
