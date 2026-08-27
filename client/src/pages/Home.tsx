@@ -60,6 +60,7 @@ import {
   Clapperboard,
   Check,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clipboard,
   CloudSun,
@@ -3865,6 +3866,25 @@ function MomentsPanel({
   onDeletePost: (post: Post) => void;
 }) {
   const photoPosts = posts.filter(post => Boolean(post.image_url));
+  const [selectedMedia, setSelectedMedia] = useState<Post | null>(null);
+
+  useEffect(() => {
+    if (!selectedMedia) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedMedia(null);
+      if (event.key === "ArrowLeft") moveMedia(-1);
+      if (event.key === "ArrowRight") moveMedia(1);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMedia, photoPosts]);
+
+  function moveMedia(offset: number) {
+    if (!selectedMedia || photoPosts.length < 2) return;
+    const currentIndex = photoPosts.findIndex(post => post.id === selectedMedia.id);
+    const nextIndex = (currentIndex + offset + photoPosts.length) % photoPosts.length;
+    setSelectedMedia(photoPosts[nextIndex] ?? null);
+  }
 
   async function downloadMedia(post: Post) {
     if (!post.image_url) return;
@@ -3935,49 +3955,88 @@ function MomentsPanel({
           </p>
         </section>
       ) : (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-5 xl:grid-cols-6">
           {photoPosts.map(post => (
-            <article className="group overflow-hidden rounded-[1.35rem] border border-ink/8 bg-white shadow-[0_10px_24px_rgba(55,35,42,0.06)]" key={post.id}>
+            <article className="group relative aspect-square overflow-hidden rounded-xl border border-ink/8 bg-white shadow-[0_6px_16px_rgba(55,35,42,0.06)]" key={post.id}>
               <button
                 aria-label={`Visualizar ${post.media_type === "video" ? "vídeo" : "foto"} de ${post.author_name}`}
-                className="relative block w-full cursor-zoom-in bg-ink/5 text-left"
-                onClick={() => post.image_url && window.open(post.image_url, "_blank", "noopener,noreferrer")}
+                className="relative block h-full w-full cursor-zoom-in bg-ink/5 text-left"
+                onClick={() => setSelectedMedia(post)}
                 type="button"
               >
                 {post.media_type === "video" ? (
-                  <video className="aspect-[4/3] w-full object-cover" muted preload="metadata" src={post.image_url} />
+                  <video className="h-full w-full object-cover" muted preload="metadata" src={post.image_url} />
                 ) : (
-                  <img alt={`Foto compartilhada por ${post.author_name}`} className="aspect-[4/3] w-full object-cover" src={post.image_url} />
+                  <img alt={`Foto compartilhada por ${post.author_name}`} className="h-full w-full object-cover" src={post.image_url} />
                 )}
-                {post.media_type === "video" && (
-                  <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-ink/75 px-3 py-1.5 text-xs font-extrabold text-white">
-                    <Play className="h-3 w-3 fill-current" /> vídeo
-                  </span>
-                )}
+                <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-ink/80 to-transparent px-2 pb-2 pt-6 text-[0.58rem] font-bold text-white">
+                  <span className="truncate">{post.author_name}</span>
+                  {post.media_type === "video" && <Play className="h-3 w-3 shrink-0 fill-current" />}
+                </span>
               </button>
-              <div className="p-4">
-                <p className="line-clamp-2 text-sm leading-6 text-ink/72">{post.content || "Um momento guardado em silêncio."}</p>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-ink/48">
-                  <span>{formatDate(post.created_at)}</span>
-                  <div className="flex items-center gap-1.5">
-                    <button aria-label="Baixar mídia" className="inline-flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 text-ink/60 transition hover:bg-hibiscus/12 hover:text-hibiscus" onClick={() => void downloadMedia(post)} type="button">
-                      <Download className="h-3.5 w-3.5" /> baixar
-                    </button>
-                    <button aria-pressed={widgetMomentId === post.id} className={`rounded-full px-3 py-1.5 transition ${widgetMomentId === post.id ? "bg-hibiscus text-white" : "bg-paper text-ink/60 hover:bg-hibiscus/12 hover:text-hibiscus"}`} onClick={() => onChooseWidgetMoment(post)} type="button">
-                      {widgetMomentId === post.id ? "em destaque" : "destacar"}
-                    </button>
-                    {post.author_id === currentUserId && (
-                      <>
-                        <button aria-label={`Editar mídia de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-paper hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onEditPost(post)} type="button"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button aria-label={`Apagar mídia de ${formatDate(post.created_at)}`} className="rounded-full p-1.5 text-ink/42 hover:bg-hibiscus/10 hover:text-hibiscus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hibiscus" onClick={() => onDeletePost(post)} type="button"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {widgetMomentId === post.id && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-hibiscus px-2 py-1 text-[0.56rem] font-extrabold text-white">destaque</span>}
+              {post.author_id === currentUserId && (
+                <button aria-label="Excluir mídia" className="absolute right-2 top-2 rounded-full bg-ink/70 p-1.5 text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100" onClick={() => onDeletePost(post)} type="button">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
             </article>
           ))}
         </section>
+      )}
+      {selectedMedia?.image_url && (
+        <div
+          aria-label="Visualizador da galeria"
+          aria-modal="true"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/90 p-3 sm:p-8"
+          onClick={() => setSelectedMedia(null)}
+          role="dialog"
+        >
+          <div
+            className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.4rem] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.3)]"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between gap-3 border-b border-ink/8 px-4 py-3 sm:px-5">
+              <div className="min-w-0">
+                <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em] text-hibiscus">Galeria privada</p>
+                <p className="truncate text-xs font-bold text-ink/52">{selectedMedia.author_name} · {formatDate(selectedMedia.created_at)}</p>
+              </div>
+              <button aria-label="Fechar visualização" className="rounded-full p-2 text-ink/55 transition hover:bg-paper hover:text-hibiscus" onClick={() => setSelectedMedia(null)} type="button">
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+            <div className="relative flex min-h-[45vh] items-center justify-center bg-ink p-2 sm:min-h-[58vh] sm:p-5">
+              {selectedMedia.media_type === "video" ? (
+                <video autoPlay className="max-h-[68vh] max-w-full rounded-lg object-contain" controls playsInline preload="metadata" src={selectedMedia.image_url} />
+              ) : (
+                <img alt={`Visualização da foto de ${selectedMedia.author_name}`} className="max-h-[68vh] max-w-full rounded-lg object-contain" src={selectedMedia.image_url} />
+              )}
+              {photoPosts.length > 1 && (
+                <>
+                  <button aria-label="Mídia anterior" className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-ink shadow-lg transition hover:bg-white" onClick={() => moveMedia(-1)} type="button">
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button aria-label="Próxima mídia" className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-ink shadow-lg transition hover:bg-white" onClick={() => moveMedia(1)} type="button">
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
+            <footer className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+              <p className="min-w-0 flex-1 truncate text-sm text-ink/68">{selectedMedia.content || "Um momento guardado em silêncio."}</p>
+              <div className="flex shrink-0 items-center gap-2">
+                <button aria-label="Baixar mídia" className="inline-flex items-center gap-1.5 rounded-full bg-hibiscus px-3 py-2 text-xs font-extrabold text-white transition hover:bg-hibiscus/90" onClick={() => void downloadMedia(selectedMedia)} type="button">
+                  <Download className="h-3.5 w-3.5" /> baixar
+                </button>
+                {selectedMedia.author_id === currentUserId && (
+                  <button aria-label="Excluir mídia" className="rounded-full p-2 text-ink/45 transition hover:bg-hibiscus/10 hover:text-hibiscus" onClick={() => { setSelectedMedia(null); onDeletePost(selectedMedia); }} type="button">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </footer>
+          </div>
+        </div>
       )}
     </div>
   );
