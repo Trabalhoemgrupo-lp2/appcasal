@@ -66,4 +66,9 @@
 - [ ] Validar a experiência da galeria de telefone em telas móveis e desktop — mobile vazio validado; falta desktop e mídia real
 - [ ] Validar a Galeria autenticada com mídia real em desktop: foto, vídeo, grade, visualizador, navegação, download e exclusão
 - [ ] Validar a Galeria autenticada com mídia real em mobile: foto, vídeo, controles, download e exclusão
-- [ ] Registrar evidência explícita da aba Galeria em desktop e confirmar a UI publicada após deploy
+- [x] Registrar evidência explícita da aba Galeria em desktop e confirmar a UI publicada após deploy — bundle e04bd8f com visualizador e contador confirmados
+- [ ] Adaptar o cabeçalho da Galeria para o padrão Fototeca com título e data da coleção
+- [ ] Transformar a grade em mosaico contínuo de três colunas sem cartões intermediários
+- [ ] Adicionar filtros inferiores Anos, Meses e Tudo, além de busca
+- [ ] Adicionar modo Selecionar com seleção múltipla e ações de mídia
+- [ ] Validar a fototeca em mobile e desktop e publicar a alteração
