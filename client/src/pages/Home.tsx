@@ -3838,32 +3838,16 @@ function FeedPanel({
 function MomentsPanel({
   posts,
   currentUserId,
-  value,
-  onChange,
-  onSubmit,
-  busy,
-  photoPreview,
-  photoName,
-  onPhotoChange,
-  onClearPhoto,
-  widgetMomentId,
-  onChooseWidgetMoment,
-  onEditPost,
+  galleryUploadBusy,
+  galleryUploadProgress,
+  onUploadFiles,
   onDeletePost,
 }: {
   posts: Post[];
   currentUserId: string;
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: () => void;
-  busy: boolean;
-  photoPreview?: string;
-  photoName?: string;
-  onPhotoChange: (file: File | null) => void;
-  onClearPhoto: () => void;
-  widgetMomentId: string | null;
-  onChooseWidgetMoment: (post: Post) => void;
-  onEditPost: (post: Post) => void;
+  galleryUploadBusy: boolean;
+  galleryUploadProgress: { current: number; total: number } | null;
+  onUploadFiles: (files: File[]) => void;
   onDeletePost: (post: Post) => void;
 }) {
   const photoPosts = posts.filter(post => Boolean(post.image_url));
@@ -3873,7 +3857,7 @@ function MomentsPanel({
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [showComposer, setShowComposer] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const latestMediaDate = photoPosts[0]?.created_at ? new Date(photoPosts[0].created_at) : null;
   const galleryDateLabel = latestMediaDate && !Number.isNaN(latestMediaDate.getTime())
     ? new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" }).format(latestMediaDate)
@@ -3981,29 +3965,24 @@ function MomentsPanel({
           <span className="inline-flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" /> somente vocês</span>
         </div>
       </section>
-      {showComposer ? (
-        <section className="rounded-[1.35rem] border border-ink/8 bg-white p-3 shadow-[0_10px_24px_rgba(55,35,42,0.06)]">
-          <div className="mb-2 flex items-center justify-between px-2">
-            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-hibiscus">Adicionar à Fototeca</p>
-            <button className="text-xs font-bold text-ink/48 hover:text-hibiscus" onClick={() => setShowComposer(false)} type="button">fechar</button>
-          </div>
-          <Composer
-            busy={busy}
-            onChange={onChange}
-            onClearPhoto={onClearPhoto}
-            onPhotoChange={onPhotoChange}
-            onSubmit={() => { onSubmit(); setShowComposer(false); }}
-            photoName={photoName}
-            photoPreview={photoPreview}
-            value={value}
-          />
-        </section>
-      ) : (
-        <button className="flex w-full items-center justify-between rounded-[1.2rem] border border-ink/8 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(55,35,42,0.05)] transition hover:border-hibiscus/35 hover:bg-hibiscus/[0.03]" onClick={() => setShowComposer(true)} type="button">
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-ink/70"><Plus className="h-4 w-4 text-hibiscus" /> adicionar fotos ou vídeos</span>
-          <ChevronRight className="h-4 w-4 text-ink/35" />
+      <section className="rounded-[1.2rem] border border-ink/8 bg-white p-3 shadow-[0_8px_20px_rgba(55,35,42,0.05)]">
+        <input
+          accept={ACCEPTED_MEMORY_MEDIA_TYPES.join(",")}
+          className="hidden"
+          multiple
+          onChange={event => {
+            onUploadFiles(Array.from(event.target.files ?? []));
+            event.currentTarget.value = "";
+          }}
+          ref={uploadInputRef}
+          type="file"
+        />
+        <button aria-label="Enviar fotos e vídeos" className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left transition hover:bg-hibiscus/[0.05] disabled:cursor-wait disabled:opacity-65" disabled={galleryUploadBusy} onClick={() => uploadInputRef.current?.click()} type="button">
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-ink/72"><ImagePlus className="h-5 w-5 text-hibiscus" /> {galleryUploadBusy && galleryUploadProgress ? `Enviando ${galleryUploadProgress.current} de ${galleryUploadProgress.total}...` : "Enviar fotos e vídeos"}</span>
+          <span className="text-xs font-extrabold text-hibiscus">{galleryUploadBusy ? "aguarde" : "selecionar"}</span>
         </button>
-      )}
+        <p className="px-2 pb-1 text-[0.68rem] leading-5 text-ink/42">Você pode selecionar várias fotos e vídeos ao mesmo tempo.</p>
+      </section>
       {photoPosts.length === 0 ? (
         <section className="rounded-[1.55rem] border border-dashed border-ink/15 bg-paper/80 px-6 py-12 text-center">
           <ImagePlus className="mx-auto h-7 w-7 text-hibiscus" />
@@ -4036,7 +4015,6 @@ function MomentsPanel({
                 </span>
               </button>
               {selectionMode && <span className={`pointer-events-none absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full border-2 ${selected ? "border-hibiscus bg-hibiscus text-white" : "border-white bg-ink/35 text-transparent"}`}><Check className="h-3.5 w-3.5" /></span>}
-              {widgetMomentId === post.id && !selectionMode && <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-hibiscus px-2 py-1 text-[0.56rem] font-extrabold text-white">destaque</span>}
               {post.author_id === currentUserId && !selectionMode && (
                 <button aria-label="Excluir mídia" className="absolute right-2 top-2 rounded-full bg-ink/70 p-1.5 text-white opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100" onClick={() => onDeletePost(post)} type="button">
                   <Trash2 className="h-3 w-3" />
@@ -6632,6 +6610,8 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | undefined>();
+  const [galleryUploadBusy, setGalleryUploadBusy] = useState(false);
+  const [galleryUploadProgress, setGalleryUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [posting, setPosting] = useState(false);
   const [sending, setSending] = useState(false);
   const [savingPlan, setSavingPlan] = useState(false);
@@ -7622,6 +7602,85 @@ export default function Home() {
     clearPhoto();
     setSelectedPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  async function handleGalleryUpload(files: File[]) {
+    if (galleryUploadBusy || files.length === 0) return;
+    const acceptedFiles = files.filter(file => {
+      const isVideo = file.type.startsWith("video/");
+      const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
+      if (!ACCEPTED_MEMORY_MEDIA_TYPES.includes(file.type)) {
+        toast.error(`${file.name}: formato não suportado.`);
+        return false;
+      }
+      if (file.size > maxBytes) {
+        toast.error(`${file.name}: ${isVideo ? "vídeos" : "fotos"} acima do limite permitido.`);
+        return false;
+      }
+      return true;
+    });
+    if (acceptedFiles.length === 0) return;
+    setGalleryUploadBusy(true);
+    setGalleryUploadProgress({ current: 0, total: acceptedFiles.length });
+    try {
+      if (isPreview) {
+        const previewPosts = acceptedFiles.map(file => ({
+          id: crypto.randomUUID(),
+          content: "",
+          created_at: new Date().toISOString(),
+          author_id: currentUserId,
+          author_name: "Você",
+          image_url: URL.createObjectURL(file),
+          media_type: file.type.startsWith("video/") ? "video" as const : "image" as const,
+        }));
+        setPosts(current => [...previewPosts, ...current]);
+        setGalleryUploadProgress({ current: acceptedFiles.length, total: acceptedFiles.length });
+        toast.success(`${acceptedFiles.length} ${acceptedFiles.length === 1 ? "mídia enviada" : "mídias enviadas"}.`);
+        return;
+      }
+      if (!supabase || !session || !coupleId) {
+        toast.error("Entre em um casal para enviar mídias à Fototeca.");
+        return;
+      }
+      let uploaded = 0;
+      for (const file of acceptedFiles) {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]/g, "-");
+        const imagePath = `${coupleId}/${session.user.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from(PHOTO_BUCKET).upload(imagePath, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (uploadError) {
+          toast.error(`${file.name}: ${uploadError.message}`);
+          uploaded += 1;
+          setGalleryUploadProgress({ current: uploaded, total: acceptedFiles.length });
+          continue;
+        }
+        const { data, error: insertError } = await supabase.from("posts").insert({
+          couple_id: coupleId,
+          author_id: session.user.id,
+          content: null,
+          image_path: imagePath,
+        }).select("id, content, created_at, author_id, image_path, profiles(name)").single();
+        if (insertError || !data) {
+          await supabase.storage.from(PHOTO_BUCKET).remove([imagePath]);
+          toast.error(`${file.name}: ${insertError?.message ?? "não foi possível salvar"}.`);
+        } else {
+          const freshPost = mapPost(data as DatabasePost, await signedPhotoUrl(imagePath));
+          setPosts(current => [freshPost, ...current]);
+        }
+        uploaded += 1;
+        setGalleryUploadProgress({ current: uploaded, total: acceptedFiles.length });
+      }
+      const completed = uploaded === acceptedFiles.length;
+      toast[completed ? "success" : "info"](`${uploaded} de ${acceptedFiles.length} ${acceptedFiles.length === 1 ? "mídia processada" : "mídias processadas"}.`);
+    } catch (error) {
+      console.error("[Gallery] Falha no upload múltiplo", error);
+      toast.error("O upload foi interrompido. Tente novamente.");
+    } finally {
+      setGalleryUploadBusy(false);
+      window.setTimeout(() => setGalleryUploadProgress(null), 500);
+    }
   }
 
   async function handleAuth(
@@ -10184,26 +10243,16 @@ export default function Home() {
               )}
               {tab === "momentos" && (
                 <MomentsPanel
-                  busy={posting}
                   currentUserId={currentUserId}
-                  onChange={setPostDraft}
-                  onChooseWidgetMoment={handleChooseWidgetMoment}
-                  onClearPhoto={clearPhoto}
+                  galleryUploadBusy={galleryUploadBusy}
+                  galleryUploadProgress={galleryUploadProgress}
                   onDeletePost={post => {
                     void handleDeletePost(post);
                   }}
-                  onEditPost={post => {
-                    void handleEditPost(post);
+                  onUploadFiles={files => {
+                    void handleGalleryUpload(files);
                   }}
-                  onPhotoChange={handlePhotoChange}
-                  onSubmit={() => {
-                    void handlePost();
-                  }}
-                  photoName={selectedPhoto?.name}
-                  photoPreview={photoPreview}
                   posts={posts}
-                  value={postDraft}
-                  widgetMomentId={widgetMomentId}
                 />
               )}
               {tab === "chat" && (
