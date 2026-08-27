@@ -12,8 +12,8 @@
 - [x] Preservar PWA, manifesto e service worker
 - [x] Configurar variáveis de produção no projeto permanente
 - [x] Documentar URLs autorizadas para Supabase, Google Maps e Spotify
-- [ ] Corrigir compatibilidade da coluna address em favorite_places
-- [ ] Corrigir política RLS recursiva de couple_quiz_answers no Supabase
+- [x] Corrigir compatibilidade da coluna address em favorite_places — migration executada e coluna confirmada por consulta
+- [ ] Confirmar política RLS recursiva de couple_quiz_answers no contexto autenticado — SQL executado pelo usuário; consulta administrativa passou, mas a verificação do RPC não foi conclusiva
 - [ ] Habilitar couple_locations e favorite_places no Supabase Realtime
 - [x] Executar build de produção
 - [x] Validar TypeScript e testes
@@ -51,3 +51,12 @@
 - [ ] Validar com sessão autenticada a correção do bloqueio de resposta e salvamento — handlers defensivos publicados; RLS externa ainda pode bloquear
 - [ ] Adicionar testes funcionais dos handlers de resposta e salvamento — teste atual cobre contratos no código-fonte
 - [x] Validar build, preview desktop/mobile e bundle público após a correção — HTTP 200 e marcador do handler de chat confirmados
+- [ ] Confirmar que a política RLS definitiva removeu a mensagem “é preciso conferir a política” ao responder o quiz
+- [ ] Validar resposta autenticada do quiz após aplicar a política não recursiva
+- [x] Substituir a navegação/área Momentos por Galeria
+- [x] Reutilizar `posts` e o bucket privado existente para metadados de fotos e vídeos, sem criar tabela redundante
+- [x] Implementar upload autenticado para armazenamento privado — fotos até 5 MB e vídeos até 50 MB
+- [x] Implementar visualização em grade, abertura da mídia e download de mídia
+- [x] Adicionar cobertura estrutural para formatos de mídia, navegação da Galeria e download
+- [ ] Validar a galeria em desktop/mobile, build e publicação — desktop/mobile e build concluídos; publicação após sincronização pendente
+- [x] Exibir no contador dias, horas, minutos e segundos com atualização contínua
