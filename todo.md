@@ -58,9 +58,12 @@
 - [x] Implementar upload autenticado para armazenamento privado — fotos até 5 MB e vídeos até 50 MB
 - [x] Implementar visualização em grade, abertura da mídia e download de mídia
 - [x] Adicionar cobertura estrutural para formatos de mídia, navegação da Galeria e download
-- [ ] Validar a galeria em desktop/mobile, build e publicação — desktop/mobile e build concluídos; publicação após sincronização pendente
+- [ ] Validar a galeria em desktop/mobile, build e publicação — build e bundle público confirmados; falta exercício autenticado com mídia real
 - [x] Exibir no contador dias, horas, minutos e segundos com atualização contínua
 - [x] Reestruturar a Galeria para grade de miniaturas no padrão de telefone
 - [x] Adicionar visualização em tela cheia com navegação entre fotos e vídeos
 - [x] Adicionar ações de baixar e excluir na visualização de mídia
-- [ ] Validar a experiência da galeria de telefone em telas móveis e desktop
+- [ ] Validar a experiência da galeria de telefone em telas móveis e desktop — mobile vazio validado; falta desktop e mídia real
+- [ ] Validar a Galeria autenticada com mídia real em desktop: foto, vídeo, grade, visualizador, navegação, download e exclusão
+- [ ] Validar a Galeria autenticada com mídia real em mobile: foto, vídeo, controles, download e exclusão
+- [ ] Registrar evidência explícita da aba Galeria em desktop e confirmar a UI publicada após deploy
