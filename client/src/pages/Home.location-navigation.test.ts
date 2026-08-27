@@ -29,11 +29,13 @@ describe("abas dedicadas", () => {
     expect(home).toContain("onSaveRelationshipDate={handleSaveRelationshipDate}");
   });
 
-  it("mantém Momentos como uma galeria privada com seleção reversível para o atalho", () => {
-    expect(home).toMatch(/\{\s*id: "momentos",\s*label: "Momentos",\s*icon: Camera\s*\}/);
+  it("mantém a Galeria privada com seleção reversível para o atalho", () => {
+    expect(home).toMatch(/\{\s*id: "momentos",\s*label: "Galeria",\s*icon: Camera\s*\}/);
     expect(home).toContain('{tab === "momentos" && (');
     expect(home).toContain("<MomentsPanel");
     expect(home).toContain("onChooseWidgetMoment={handleChooseWidgetMoment}");
+    expect(home).toContain("ACCEPTED_MEMORY_MEDIA_TYPES");
+    expect(home).toContain("downloadMedia");
   });
 
   it("mantém Leituras e Filmes como listas compartilhadas em superfícies diretas", () => {
