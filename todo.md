@@ -67,8 +67,11 @@
 - [ ] Validar a Galeria autenticada com mídia real em desktop: foto, vídeo, grade, visualizador, navegação, download e exclusão
 - [ ] Validar a Galeria autenticada com mídia real em mobile: foto, vídeo, controles, download e exclusão
 - [x] Registrar evidência explícita da aba Galeria em desktop e confirmar a UI publicada após deploy — bundle e04bd8f com visualizador e contador confirmados
-- [ ] Adaptar o cabeçalho da Galeria para o padrão Fototeca com título e data da coleção
-- [ ] Transformar a grade em mosaico contínuo de três colunas sem cartões intermediários
-- [ ] Adicionar filtros inferiores Anos, Meses e Tudo, além de busca
-- [ ] Adicionar modo Selecionar com seleção múltipla e ações de mídia
-- [ ] Validar a fototeca em mobile e desktop e publicar a alteração
+- [x] Adaptar o cabeçalho da Galeria para o padrão Fototeca com título e data da coleção
+- [x] Transformar a grade em mosaico contínuo de três colunas sem cartões intermediários
+- [x] Adicionar filtros inferiores Anos, Meses e Tudo, além de busca
+- [x] Adicionar modo Selecionar com seleção múltipla e ações de mídia
+- [x] Validar a fototeca em mobile e desktop e publicar a alteração — screenshots e bundle público confirmados
+- [ ] Validar a Fototeca autenticada com mídia real em mobile: grade contínua, busca, filtros Anos/Meses/Tudo, seleção múltipla e ações em lote
+- [ ] Validar a Fototeca autenticada com mídia real em desktop: grade contínua, visualizador, navegação, download e exclusão
+- [ ] Registrar evidência da UI publicada da Fototeca com mídias reais após o deploy
